@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   builtins.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ybouddou <ybouddou@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cabouelw <cabouelw@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 09:36:40 by ybouddou          #+#    #+#             */
-/*   Updated: 2021/03/10 19:22:35 by ybouddou         ###   ########.fr       */
+/*   Updated: 2021/03/16 16:42:41 by cabouelw         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ void	do_builtins(t_mini *mini)
 	if (!*mini->tab[0])
 		return ;
 	if (!(ft_strncmp(mini->tab[0], "echo", ft_strlen(mini->tab[0]))))
-		ft_echo(mini->tab);
+		ft_echo(mini->tab, mini->status);
 	else if (!(ft_strncmp(mini->tab[0], "env", ft_strlen(mini->tab[0]))))
 		ft_env(mini->myenv);
 	else if (!(ft_strncmp(mini->tab[0], "exit", ft_strlen(mini->tab[0]))))
@@ -49,5 +49,6 @@ void	do_builtins(t_mini *mini)
 		ft_unset(mini);
 	else if (!(ft_strncmp(mini->tab[0], "export", ft_strlen(mini->tab[0]))))
 		ft_export(mini);
-	
+	if (mini->fd > 1)
+		close(mini->fd);
 }
