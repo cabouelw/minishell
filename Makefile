@@ -6,7 +6,7 @@
 #    By: cabouelw <cabouelw@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/10/22 22:34:18 by ybouddou          #+#    #+#              #
-#    Updated: 2021/03/16 09:29:59 by cabouelw         ###   ########.fr        #
+#    Updated: 2021/03/27 12:07:17 by cabouelw         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,6 +17,8 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Werror
 SRC = main.c\
 	tools.c\
+	expansions.c\
+	commands.c\
 	linkedlist.c\
 	builtins/ft_env.c\
 	builtins/ft_echo.c\
@@ -25,10 +27,11 @@ SRC = main.c\
 	builtins/ft_unset.c\
 	builtins/ft_pwd.c\
 	builtins/ft_export.c\
+	builtins/export.c\
+	builtins/utils.c\
 	builtins.c\
 	tokens/ft_redirecting.c\
-	tokens/ft_pips.c\
-	tokens/ft_handler.c\
+	tokens/ft_open_fd.c\
 	pars_src/check_point.c\
 	pars_src/check_quotation.c\
 	pars_src/parsing.c\
@@ -42,7 +45,7 @@ OBJ = $(SRC:.c=.o)
 
 all: $(NAME)
 
-$(NAME): $(OBJ)
+$(NAME): $(OBJ) $(LIB)
 	@ar rcs $(NAME) $(OBJ)
 	@gcc $(NAME) $(LIB_PATH)/$(LIB) -o minishell
 

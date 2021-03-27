@@ -3,111 +3,97 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cabouelw <cabouelw@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ybouddou <ybouddou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/28 15:58:40 by ybouddou          #+#    #+#             */
-/*   Updated: 2021/03/16 19:05:54 by cabouelw         ###   ########.fr       */
+/*   Updated: 2021/03/27 10:58:21 by ybouddou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int		ifexist(t_mini *mini)
-{
-	int		i;
-	int		fd;
-	char	*slashcmd;
-
-	i = 0;
-	slashcmd = ft_strjoin("/", mini->tab[0]);
-	while (mini->paths[i])
-	{
-		mini->cmd_exist = ft_strjoin(mini->paths[i], slashcmd);
-		if ((fd = open(mini->cmd_exist, O_RDONLY)) > 0)
-		{
-			ft_strlcpy(mini->tab[0], mini->cmd_exist,\
-				ft_strlen(mini->cmd_exist) + 1);
-			close(fd);
-			free(slashcmd);
-			return (1);
-		}
-		free(mini->cmd_exist);
-		i++;
-	}
-	free(slashcmd);
-	return (0);
-}
-
-void	dollar(t_mini *mini, int i, int j, char **tmp)
-{
-	char	*value;
-
-	value = ft_substr(mini->tab[i], j, checksymbol(mini->tab[i], j + 1) - j);
-	value = ft_strchr(value, '$') + 1;
-	*tmp = ft_strdup(ft_lstsearch(mini->myenv, value));
-}
-
-void	expansions(t_mini *mini)
-{
-	int		i;
-	int		j;
-	char	s;
-	char	*tmp;
-	char	*temp;
-
-	i = 0;
-	while (mini->tab[i])
-	{
-		j = 0;
-		temp = ft_strdup("");
-		while (mini->tab[i][j])
-		{
-			if (s == mini->tab[i][j] * -1)
-				s = 0;
-			if (mini->tab[i][j] < 0)
-				s = mini->tab[i][j] * -1;
-			if (mini->tab[i][j] == '$' && mini->tab[i][j + 1] && s != '\'')
-				dollar(mini, i, j, &tmp);
-			else
-				tmp = ft_substr(mini->tab[i], j,\
-					checksymbol(mini->tab[i], j + 1) - j);
-			j = checksymbol(mini->tab[i], j + 1);
-			temp = ft_strjoin(temp, tmp);
-			free(tmp);
-		}
-		ft_strlcpy(mini->tab[i], temp, ft_strlen(temp) + 1);
-		free(temp);
-		i++;
-	}
-}
-
 void	execution(t_mini *mini)
 {
-	mini->tab = NULL;
-	while (mini->cmd_list && !mini->status)
+	t_cmd	*cmd;
+	t_pipe	*pipe;
+
+	cmd = NULL;
+	pipe = NULL;
+	cmd = mini->cmd;
+	while (cmd)
 	{
-		while (mini->cmd_list->pipe)
+		pipe = cmd->pipe;
+		while (pipe)
 		{
-			check_redirec(mini);
-			mini->tab = ft_strsplit(mini->cmd_list->pipe->content, " ", 1);
-			expansions(mini);
+			expansions(mini, pipe);
+			redir(mini, &pipe, 0);
+			mini->tab = ft_strsplit(pipe->content, " ", 1);
+			tilde(mini);
 			mini->tab = remove_dust(mini->tab);
-			if (is_builtins(mini))
-				do_builtins(mini);
-			else
-			{
-				if (ifexist(mini))
-					exec_cmd(mini);
-				else
-					cmd_not_found(mini);
-			}
-			if (mini->fd != 0)
-				close(mini->fd);
-			// ft_free(mini->tab);
+			commands(mini);
+			ft_free(mini->tab);
+			ft_free(mini->env_array);
 			mini->tab = NULL;
-			mini->cmd_list->pipe = mini->cmd_list->pipe->next;
+			mini->env_array = NULL;
+			pipe = pipe->next;
 		}
-		mini->cmd_list = mini->cmd_list->next;
+		cmd = cmd->next;
+	}
+}
+
+void	handle_sigint(int sig)
+{
+	(void)sig;
+	ft_putstr_fd("\033[2D\033[K\n", 1);
+	g_mini->cmd_status = 1;
+	prompt(g_mini);
+}
+
+void	handle_sigquit(int sig)
+{
+	(void)sig;
+	g_mini->tmp = NULL;
+	g_mini->temp = ft_strdup("");
+	if (g_mini->pid)
+		return (ft_putstr_fd("Quit: 3\n", 1));
+	if (!g_mini->r  && !g_mini->input)
+	{
+		ft_putstr_fd("\033[2D\033[K", 1);
+		// printf("input : |%s|\n", g_mini->input);
+		return ;
+	}
+	while (!g_mini->r && g_mini->input)
+	{
+		ft_putstr_fd("\033[2D\033[K", 1);
+		g_mini->temp = ft_strdup(g_mini->input);
+		free(g_mini->input);
+		g_mini->r = get_next_line(0, &g_mini->input);
+		g_mini->tmp = ft_strjoin(g_mini->temp, g_mini->input);
+		free(g_mini->input);
+		g_mini->input = ft_strdup(g_mini->tmp);
+		
+	}
+}
+
+void	handle_ctrl_d(t_mini *mini)
+{
+	mini->tmp = NULL;
+	mini->temp = ft_strdup("");
+	while (!mini->r && *mini->input)
+	{
+		ft_putstr_fd("\033[K", 1);
+		mini->temp = ft_strdup(mini->input);
+		free(mini->input);
+		mini->r = get_next_line(0, &mini->input);
+		mini->tmp = ft_strjoin(mini->temp, mini->input);
+		free(mini->input);
+		mini->input = ft_strdup(mini->tmp);
+		
+	}
+	if (!mini->r && !*mini->input)
+	{
+		ft_putstr_fd("exit\n", 1);
+		exit(0);
 	}
 }
 
@@ -119,16 +105,22 @@ int		main(int ac, char **av, char **env)
 	(void)av;
 	mini.myenv = (t_env *){0};
 	mini.check = (t_checkers){0};
-	mini.cmd_list = (t_cmd*){0};
+	mini.cmd = (t_cmd*){0};
 	mini = (t_mini){0};
+	g_mini = &mini;
 	init_env(env, &mini.myenv);
+	signal(SIGINT, handle_sigint);
+	signal(SIGQUIT, handle_sigquit);
 	while (1)
 	{
 		prompt(&mini);
-		get_next_line(0, &mini.input);
+		mini.r = get_next_line(0, &mini.input);
+		handle_ctrl_d(&mini);
 		parse(&mini);
 		if (!mini.status)
 			execution(&mini);
+		free(mini.cmd);
+		mini.cmd = NULL;
 		free(mini.input);
 		mini.input = NULL;
 	}
