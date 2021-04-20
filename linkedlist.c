@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   linkedlist.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ybouddou <ybouddou@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cabouelw <cabouelw@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/12 18:24:43 by ybouddou          #+#    #+#             */
-/*   Updated: 2021/03/19 14:49:27 by ybouddou         ###   ########.fr       */
+/*   Updated: 2021/04/12 13:08:06 by cabouelw         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,30 +18,30 @@ void	init_env(char **env, t_env **myenv)
 	char	**splitted;
 	int		i;
 
-	*myenv = (t_env*)malloc(sizeof(t_env));
+	*myenv = (t_env *)malloc(sizeof(t_env));
 	(*myenv)->next = NULL;
 	list = *myenv;
-	i = 0;
-	while (env[i])
+	i = -1;
+	while (env[++i])
 	{
 		splitted = ft_split(env[i], '=');
+		list->print = 0;
 		list->key = ft_strdup(splitted[0]);
 		if (splitted[1])
 		{
 			list->symbol = ft_strdup("=");
 			list->value = ft_strdup(splitted[1]);
 		}
-		ft_free(splitted);
+		ft_free(&splitted);
 		if (!env[i + 1])
 			break ;
-		list->next = (t_env*)malloc(sizeof(t_env));
+		list->next = (t_env *)malloc(sizeof(t_env));
 		list = list->next;
-		i++;
 	}
 	list->next = NULL;
 }
 
-int		ft_listsize(t_env *env)
+int	ft_listsize(t_env *env)
 {
 	t_env	*list;
 	int		i;
@@ -57,7 +57,7 @@ int		ft_listsize(t_env *env)
 	return (i);
 }
 
-void	ft_lsttoarray(t_env *env, char ***tab)
+void	ft_lsttoarray(t_env *env, char ***tabu)
 {
 	t_env	*list;
 	char	*join;
@@ -66,23 +66,23 @@ void	ft_lsttoarray(t_env *env, char ***tab)
 
 	i = 0;
 	list = NULL;
-	(*tab) = NULL;
-	(*tab) = (char **)malloc(sizeof(char*) * (ft_listsize(env) + 1));
+	(*tabu) = NULL;
+	(*tabu) = (char **)malloc(sizeof(char *) * (ft_listsize(env) + 1));
 	list = env;
 	while (list)
 	{
 		joined = ft_strjoin("=", list->value);
 		join = ft_strjoin(list->key, joined);
 		free(joined);
-		(*tab)[i] = ft_strdup(join);
+		(*tabu)[i] = ft_strdup(join);
 		free(join);
 		i++;
 		list = list->next;
 	}
-	(*tab)[i] = NULL;
+	(*tabu)[i] = NULL;
 }
 
-char	*ft_lstsearch(t_env *env, char *key)
+char	*ft_lstsearch(t_env *env, char *key, int *print)
 {
 	t_env	*list;
 
@@ -90,7 +90,10 @@ char	*ft_lstsearch(t_env *env, char *key)
 	while (list)
 	{
 		if (!(ft_strncmp(list->key, key, ft_strlen(key))))
+		{
+			*print = list->print;
 			return (list->value);
+		}
 		list = list->next;
 	}
 	return (NULL);

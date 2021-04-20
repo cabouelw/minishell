@@ -6,7 +6,7 @@
 /*   By: ybouddou <ybouddou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/12/06 16:19:05 by ybouddou          #+#    #+#             */
-/*   Updated: 2021/03/21 16:05:43 by ybouddou         ###   ########.fr       */
+/*   Updated: 2021/04/13 13:54:26 by ybouddou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,8 @@ static int	lines(char **str, char **line, int fd)
 
 static int	result(int fd, char **line, char **str, int r)
 {
+	if (r < 0)
+		return (-1);
 	if ((!*str[fd] && !r))
 	{
 		*line = ft_strdup("");
@@ -49,7 +51,7 @@ static int	result(int fd, char **line, char **str, int r)
 	return (lines(str, line, fd));
 }
 
-int			get_next_line(int fd, char **line)
+int	get_next_line(int fd, char **line)
 {
 	char		*buffer;
 	static char	*str[4864];
@@ -59,17 +61,21 @@ int			get_next_line(int fd, char **line)
 	buffer = NULL;
 	if (line == NULL || fd < 0 || fd > 4864 || BUFFER_SIZE <= 0)
 		return (-1);
-	if (!(buffer = (char *)malloc(sizeof(char) * (BUFFER_SIZE + 1))))
+	buffer = (char *)malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (!buffer)
 		return (-1);
 	if (!str[fd])
 		str[fd] = ft_strdup("");
-	while (!ft_strchr(str[fd], '\n') && (r = read(fd, buffer, BUFFER_SIZE)) > 0)
+	while (!ft_strchr(str[fd], '\n'))
 	{
+		r = read(fd, buffer, BUFFER_SIZE);
+		if (r <= 0)
+			break ;
 		buffer[r] = '\0';
 		temp = ft_strjoin(str[fd], buffer);
 		free(str[fd]);
 		str[fd] = temp;
 	}
 	free(buffer);
-	return (r < 0 ? -1 : result(fd, line, str, r));
+	return (result(fd, line, str, r));
 }

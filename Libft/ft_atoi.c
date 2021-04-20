@@ -6,7 +6,7 @@
 /*   By: ybouddou <ybouddou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/10/16 10:48:45 by ybouddou          #+#    #+#             */
-/*   Updated: 2019/12/10 15:02:23 by ybouddou         ###   ########.fr       */
+/*   Updated: 2021/04/18 12:33:42 by ybouddou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,14 @@
 
 static char	*ft_ispace(const char *s)
 {
-	while (((*s == ' ') || (*s == '\t') ||
-				(*s == '\n') || (*s == '\v') ||
+	while (((*s == ' ') || (*s == '\t') || \
+				(*s == '\n') || (*s == '\v') || \
 				(*s == '\f') || (*s == '\r')))
 		s++;
 	return ((char *)s);
 }
 
-int			ft_atoi(const char *s)
+int	ft_atoi(const char *s)
 {
 	int			sign;
 	long int	n;

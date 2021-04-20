@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_unset.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ybouddou <ybouddou@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cabouelw <cabouelw@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/07 15:03:21 by ybouddou          #+#    #+#             */
-/*   Updated: 2021/03/19 17:43:48 by ybouddou         ###   ########.fr       */
+/*   Updated: 2021/04/12 13:13:24 by cabouelw         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@ void	if_nothead(t_mini *mini, t_env **list, int i)
 	t_env	*prev;
 
 	prev = NULL;
-	while (*list && ft_strncmp(mini->tab[i], (*list)->key,
-		ft_strlen(mini->tab[i])))
+	while (*list && ft_strncmp(mini->tabu[i], (*list)->key, \
+		ft_strlen(mini->tabu[i])))
 	{
 		prev = *list;
 		*list = (*list)->next;
@@ -38,20 +38,17 @@ void	ft_unset(t_mini *mini)
 	int		i;
 
 	i = 1;
-	while (mini->tab[i])
+	while (mini->tabu[i])
 	{
 		list = NULL;
 		list = mini->myenv;
-		if (list && !ft_strncmp(mini->tab[i], list->key,
-			ft_strlen(mini->tab[i])))
+		while (list)
 		{
-			free(list->key);
-			free(list->symbol);
-			free(list->value);
-			mini->myenv = list->next;
+			if (!(ft_strncmp(list->key, mini->tabu[i], \
+				ft_strlen(mini->tabu[i]))))
+				list->print = 1;
+			list = list->next;
 		}
-		else
-			if_nothead(mini, &list, i);
 		i++;
 	}
 	mini->cmd_status = 0;

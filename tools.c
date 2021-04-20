@@ -6,27 +6,25 @@
 /*   By: ybouddou <ybouddou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/02 17:18:49 by ybouddou          #+#    #+#             */
-/*   Updated: 2021/03/27 11:00:10 by ybouddou         ###   ########.fr       */
+/*   Updated: 2021/04/17 14:09:32 by ybouddou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void	ft_free(char **arr)
+void	free_pipe(t_mini *mini, t_pipe **pip)
 {
-	int		i;
+	t_pipe	*prev;
 
-	i = 0;
-	while (arr && arr[i])
-	{
-		if (arr[i])
-			free(arr[i]);
-		arr[i] = NULL;
-		i++;
-	}
-	if (arr)
-		free(arr);
-	arr = NULL;
+	prev = (*pip);
+	(*pip) = (*pip)->next;
+	if (prev->content)
+		free(prev->content);
+	free(prev);
+	ft_free(&mini->tabu);
+	mini->tabu = NULL;
+	mini->index += 2;
+	mini->p++;
 }
 
 void	git(char *tmp)
@@ -66,7 +64,8 @@ void	prompt(t_mini *mini)
 	else
 		ft_putstr_fd("\033[1;31m➜  \033[1;34m", 1);
 	if (tmp == NULL)
-		tmp = ft_strdup(ft_strrchr(ft_lstsearch(mini->myenv, "PWD"), '/') + 1);
+		tmp = ft_strdup(ft_strrchr(ft_lstsearch(mini->myenv, "PWD", \
+			&mini->print), '/') + 1);
 	else
 	{
 		if (!ft_strncmp(tmp, "/", ft_strlen(tmp)))
@@ -81,35 +80,30 @@ void	prompt(t_mini *mini)
 	mini->status = 0;
 }
 
-void	exec_cmd(t_mini *mini)
+void	error_cmd(t_mini *mini)
 {
 	mini->check.point = 1;
-	if_isdirect(mini, mini->tab[0]);
+	if_isdirect(mini, mini->tabu[0]);
 	if (mini->check.point)
 		return ;
-	if (!ifexist(mini))
-		return (not_exist(mini));
+	if (!ifexist(mini, 0))
+	{
+		not_exist(mini);
+		if (mini->cmd_status)
+			return ;
+	}
 	else
 	{
-		stat(mini->tab[0], &mini->stt);
+		stat(mini->tabu[0], &mini->stt);
 		if (mini->stt.st_mode & S_IFMT & S_IFDIR)
-			return (is_directory(mini));
+			return (is_directory(mini, mini->tabu[0]));
 		if (!(mini->stt.st_mode & X_OK))
-			return (permission(mini));
+			return (permission(mini, mini->tabu[0]));
 	}
-	mini->cmd_status = 0;
-	ft_lsttoarray(mini->myenv, &mini->env_array);
-	mini->pid = fork();
-	if (mini->pid > 0)
-	{
-		wait(NULL);
-		mini->pid = 0;
-	}
-	else
-		execve(mini->tab[0], mini->tab, mini->env_array);
+	exec_cmd(mini);
 }
 
-char	**remove_dust(char **str)
+char	**remove_dust(char ***str)
 {
 	int		i;
 	int		j;
@@ -117,20 +111,21 @@ char	**remove_dust(char **str)
 	char	**cpy;
 
 	t = 0;
-	while (str[t])
+	while ((*str)[t])
 		t++;
-	cpy = (char**)malloc(sizeof(char*) * t + 1);
+	cpy = (char **)malloc(sizeof(char *) * t + 1);
 	t = -1;
-	while (str[++t])
+	while ((*str)[++t])
 	{
-		cpy[t] = (char*)malloc(sizeof(char) * ft_strlen(str[t]) + 1);
+		cpy[t] = (char *)malloc(sizeof(char) * ft_strlen((*str)[t]) + 1);
 		i = -1;
 		j = 0;
-		while (str[t][++i] != '\0')
-			if (str[t][i] > 0)
-				cpy[t][j++] = str[t][i];
+		while ((*str)[t][++i] != '\0')
+			if ((*str)[t][i] > 1)
+				cpy[t][j++] = (*str)[t][i];
 		cpy[t][j] = '\0';
 	}
 	cpy[t] = NULL;
+	ft_free(str);
 	return (cpy);
 }
